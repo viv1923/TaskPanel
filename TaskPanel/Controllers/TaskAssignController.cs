@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using TaskPanel.Data;
 using TaskPanel.Models;
 
@@ -29,6 +30,13 @@ namespace TaskPanel.Controllers
             }
 
             return View();
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ViewTask()
+        {
+            var Task = await _context.GenTaskAssigns.ToListAsync();
+            return View(Task);
         }
     }
 }

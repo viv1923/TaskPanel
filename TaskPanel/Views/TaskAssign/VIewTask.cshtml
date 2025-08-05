@@ -1,0 +1,32 @@
+﻿@model IEnumerable<TaskPanel.GenTaskAssign>
+
+@{
+    ViewData["Title"] = "View Task";
+}
+
+<h2>Task List</h2>
+
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>Task No</th>
+            <th>Task Name</th>
+            <th>Assigned Date</th>
+            <th>Assign To</th>
+            <th>Due Date</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var task in Model)
+        {
+            <tr>
+                <td><input type="checkbox" value="@task.NTaskNo" />@task.NTaskNo</td>
+                <td>@task.CTask</td>
+                <td>@task.DTaskDate</td>
+                <td>@task.NToUser</td>
+                <td>@task.DDeadLine?.ToString("yyyy-MM-dd")</td>
+            </tr>
+        }
+    </tbody>
+</table>
+<input type="button" name="delete" />
