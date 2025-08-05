@@ -1,0 +1,15 @@
+﻿@model TaskPanel.Models.LoginModel
+
+<form asp-action="Login" method="post">
+    <div>
+        <label asp-for="CUserName"></label>
+        <input asp-for="CUserName" />
+        <span asp-validation-for="CUserName"></span>
+    </div>
+    <div>
+        <label asp-for="CPassword"></label>
+        <input asp-for="CPassword" type="password" />
+        <span asp-validation-for="CPassword"></span>
+    </div>
+    <button type="submit">Login</button>
+</form>

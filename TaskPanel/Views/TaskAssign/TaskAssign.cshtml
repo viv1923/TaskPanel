@@ -1,0 +1,53 @@
+﻿@model TaskPanel.Models.GenTaskAssign
+
+@{
+    ViewData["Title"] = "Add New Task";
+}
+
+<h2>Add New Task</h2>
+
+<form asp-action="TaskAssign" method="post">
+    <div class="form-group">
+        <label asp-for="NFromUser" class="control-label"></label>
+        <input asp-for="NFromUser" class="form-control" />
+        <span asp-validation-for="NFromUser" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="NToUser" class="control-label"></label>
+        <input asp-for="NToUser" class="form-control" />
+        <span asp-validation-for="NToUser" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="CTask" class="control-label"></label>
+        <textarea asp-for="CTask" class="form-control"></textarea>
+        <span asp-validation-for="CTask" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="CFileName" class="control-label"></label>
+        <input asp-for="CFileName" class="form-control" />
+        <span asp-validation-for="CFileName" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="DTaskDate" class="control-label"></label>
+        <input asp-for="DTaskDate" type="date" class="form-control" />
+        <span asp-validation-for="DTaskDate" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="DDeadLine" class="control-label"></label>
+        <input asp-for="DDeadLine" type="date" class="form-control" />
+        <span asp-validation-for="DDeadLine" class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Create Task</button>
+</form>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

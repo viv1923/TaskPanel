@@ -1,0 +1,53 @@
+﻿@model TaskPanel.Models.GenUser
+
+@{
+    ViewData["Title"] = "Create";
+}
+
+<h1>Create</h1>
+
+<h4>GenUser</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <label asp-for="CUserName" class="control-label"></label>
+                <input asp-for="CUserName" class="form-control" />
+                <span asp-validation-for="CUserName" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="CPassword" class="control-label"></label>
+                <input asp-for="CPassword" class="form-control" />
+                <span asp-validation-for="CPassword" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="CEmailId" class="control-label"></label>
+                <input asp-for="CEmailId" class="form-control" />
+                <span asp-validation-for="CEmailId" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="NMobileNo" class="control-label"></label>
+                <input asp-for="NMobileNo" class="form-control" />
+                <span asp-validation-for="NMobileNo" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="CDescription" class="control-label"></label>
+                <input asp-for="CDescription" class="form-control" />
+                <span asp-validation-for="CDescription" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Create" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
