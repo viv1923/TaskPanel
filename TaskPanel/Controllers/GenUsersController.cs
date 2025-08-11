@@ -1,10 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Security.Claims;
+using System.Threading.Tasks;
 using TaskPanel.Data;
 using TaskPanel.Models;
 
@@ -160,25 +163,34 @@ namespace TaskPanel.Controllers
         }
 
         [HttpPost]
-        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(LoginModel model)
         {
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
+                return View(model);
+
+            var user = await _context.GenUsers
+                .FirstOrDefaultAsync(u => u.CUserName == model.CUserName && u.CPassword == model.CPassword);
+
+            if (user != null)
             {
-                var user = await _context.GenUsers
-                    .FirstOrDefaultAsync(u => u.CUserName == model.CUserName && u.CPassword == model.CPassword);
+                // Create the security claims for this user
+                var claims = new List<Claim>
+        {
+            new Claim(ClaimTypes.Name, user.CUserName),
+            new Claim("UserId", user.NUserId.ToString())
+        };
 
-                if (user != null)
-                {
-                    // Placeholder for session/auth logic
-                    HttpContext.Session.SetString("Username", user.CUserName);
+                // Create the identity and principal
+                var claimsIdentity = new ClaimsIdentity(claims, "MyCookieAuth");
+                var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
 
-                    return RedirectToAction("Index", "Home"); // or wherever you want after login
-                }
+                // Sign in the user
+                await HttpContext.SignInAsync("MyCookieAuth", claimsPrincipal);
 
-                ModelState.AddModelError(string.Empty, "Invalid username or password");
+                return RedirectToAction("ViewTask", "TaskAssign");
             }
 
+            ModelState.AddModelError("", "Invalid username or password");
             return View(model);
         }
     }

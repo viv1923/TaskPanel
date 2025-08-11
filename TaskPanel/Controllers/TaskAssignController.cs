@@ -1,10 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TaskPanel.Data;
 using TaskPanel.Models;
-
 namespace TaskPanel.Controllers
 {
+    [Authorize]
     public class TaskAssignController : Controller
     {
         private readonly DataContext _context;

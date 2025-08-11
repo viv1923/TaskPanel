@@ -3,6 +3,11 @@ using TaskPanel.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddAuthentication("MyCookieAuth").AddCookie("MyCookieAuth", options =>
+{
+    options.LoginPath = "/GenUsers/Login";
+});
+builder.Services.AddAuthorization();
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 builder.Services.AddDbContext<DataContext>(options =>
@@ -28,6 +33,7 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllerRoute(
