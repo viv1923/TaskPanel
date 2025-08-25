@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Threading.Tasks;
 using TaskPanel.Data;
 using TaskPanel.Models;
 namespace TaskPanel.Controllers
@@ -16,10 +17,12 @@ namespace TaskPanel.Controllers
         }
 
         [HttpGet]
-        public IActionResult TaskAssign()
+        public async Task<IActionResult> TaskAssign()
         {
+            ViewBag.Users = await _context.GenUsers.ToListAsync();
             return View();
         }
+
         [HttpPost]
         public async Task<IActionResult> TaskAssign(GenTaskAssign Task)
         {
@@ -27,9 +30,9 @@ namespace TaskPanel.Controllers
             {
                 _context.GenTaskAssigns.Add(Task);
                 await _context.SaveChangesAsync();
-                return View();
+                return RedirectToAction("ViewTask");
             }
-
+            ViewBag.Users = await _context.GenUsers.ToListAsync(); 
             return View();
         }
 

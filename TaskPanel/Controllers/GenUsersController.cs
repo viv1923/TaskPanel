@@ -193,5 +193,15 @@ namespace TaskPanel.Controllers
             ModelState.AddModelError("", "Invalid username or password");
             return View(model);
         }
+
+        [HttpPost]
+        public async Task<IActionResult> Logout()
+        {
+            // Sign out the user from the cookie authentication scheme
+            await HttpContext.SignOutAsync("MyCookieAuth");
+
+            // Redirect back to Login page
+            return RedirectToAction("Login", "GenUsers");
+        }
     }
 }

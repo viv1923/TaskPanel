@@ -1,15 +1,124 @@
 ﻿@model TaskPanel.Models.LoginModel
+@{
+    Layout = null;
+}
 
-<form asp-action="Login" method="post">
-    <div>
-        <label asp-for="CUserName"></label>
-        <input asp-for="CUserName" />
-        <span asp-validation-for="CUserName"></span>
+<div class="login-container">
+    <div class="login-card">
+        <h2 class="login-title">Welcome Back 👋</h2>
+        <p class="login-subtitle">Please log in to continue</p>
+
+        <form asp-action="Login" method="post">
+            <div class="form-group">
+                <label asp-for="CUserName">User Name</label>
+                <input asp-for="CUserName" class="form-control" placeholder="Enter your username" />
+                <span asp-validation-for="CUserName" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="CPassword">Password</label>
+                <input asp-for="CPassword" type="password" class="form-control" placeholder="Enter your password" />
+                <span asp-validation-for="CPassword" class="text-danger"></span>
+            </div>
+
+            <button type="submit" class="btn-login">Login</button>
+        </form>
     </div>
-    <div>
-        <label asp-for="CPassword"></label>
-        <input asp-for="CPassword" type="password" />
-        <span asp-validation-for="CPassword"></span>
-    </div>
-    <button type="submit">Login</button>
-</form>
+</div>
+
+<style>
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin: 0;
+    }
+
+    .login-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+    }
+
+    .login-card {
+        background: #fff;
+        padding: 2.5rem;
+        border-radius: 12px;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        width: 350px;
+        text-align: center;
+        animation: fadeIn 0.8s ease-in-out;
+    }
+
+    .login-title {
+        margin-bottom: 0.3rem;
+        font-size: 1.8rem;
+        color: #333;
+    }
+
+    .login-subtitle {
+        margin-bottom: 1.5rem;
+        color: #777;
+        font-size: 0.95rem;
+    }
+
+    .form-group {
+        margin-bottom: 1.2rem;
+        text-align: left;
+    }
+
+    label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 0.4rem;
+        color: #444;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 0.7rem 1rem;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+    }
+
+    .form-control:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 8px rgba(102, 126, 234, 0.3);
+        outline: none;
+    }
+
+    .btn-login {
+        width: 100%;
+        padding: 0.8rem;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        font-size: 1rem;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .btn-login:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>

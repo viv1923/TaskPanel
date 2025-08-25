@@ -4,29 +4,110 @@
     ViewData["Title"] = "View Task";
 }
 
-<h2>Task List</h2>
+<h2 class="mb-4 text-primary fw-bold">📋 Task List</h2>
 
-<table class="table table-bordered table-striped">
-    <thead>
-        <tr>
-            <th>Task No</th>
-            <th>Task Name</th>
-            <th>Assigned Date</th>
-            <th>Assign To</th>
-            <th>Due Date</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var task in Model)
-        {
+<div class="table-responsive" style="max-height: 400px; overflow-y: auto; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+    <table class="table table-hover align-middle text-center">
+        <thead class="table-dark sticky-top">
             <tr>
-                <td><input type="checkbox" value="@task.NTaskNo" />@task.NTaskNo</td>
-                <td>@task.CTask</td>
-                <td>@task.DTaskDate</td>
-                <td>@task.NToUser</td>
-                <td>@task.DDeadLine?.ToString("yyyy-MM-dd")</td>
+                <th style="width: 80px;">Select</th>
+                <th>Task No</th>
+                <th>Task Name</th>
+                <th>Assigned Date</th>
+                <th>Assign To</th>
+                <th>Due Date</th>
             </tr>
-        }
-    </tbody>
-</table>
-<input type="button" name="delete" />
+        </thead>
+        <tbody>
+            @foreach (var task in Model)
+            {
+                <tr class="task-row">
+                    <td>
+                        <input type="checkbox" class="task-checkbox" data-task-id="@task.NTaskNo" />
+                    </td>
+                    <td>@task.NTaskNo</td>
+                    <td class="task-name text-primary fw-semibold" style="cursor: pointer;"
+                        data-bs-toggle="modal"
+                        data-bs-target="#taskModal"
+                        data-taskname="@task.CTask"
+                        data-taskdate="@task.DTaskDate"
+                        data-assignto="@task.NToUser"
+                        data-duedate="@task.DDeadLine?.ToString("yyyy-MM-dd")">
+                        @((task.CTask?.Length > 30) ? task.CTask.Substring(0, 30) + "..." : task.CTask)
+                    </td>
+                    <td>@task.DTaskDate</td>
+                    <td>@task.NToUser</td>
+                    <td>@task.DDeadLine?.ToString("yyyy-MM-dd")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<div class="mt-3">
+    <button class="btn btn-danger px-4">Delete Selected</button>
+</div>
+
+<!-- Task Details Modal -->
+<div class="modal fade" id="taskModal" tabindex="-1" aria-labelledby="taskModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content shadow-lg border-0 rounded-3">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold" id="taskModalLabel">📌 Task Details</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <dl class="row">
+                    <dt class="col-sm-3 text-end">Task Name:</dt>
+                    <dd class="col-sm-9" id="modalTaskName"></dd>
+
+                    <dt class="col-sm-3 text-end">Assigned Date:</dt>
+                    <dd class="col-sm-9" id="modalTaskDate"></dd>
+
+                    <dt class="col-sm-3 text-end">Assigned To:</dt>
+                    <dd class="col-sm-9" id="modalAssignTo"></dd>
+
+                    <dt class="col-sm-3 text-end">Due Date:</dt>
+                    <dd class="col-sm-9" id="modalDueDate"></dd>
+                </dl>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // Row hover effect
+            $(".task-row").hover(
+                function () { $(this).addClass("shadow-lg bg-light"); },
+                function () { $(this).removeClass("shadow-lg bg-light"); }
+            );
+
+            // Checkbox strike-through effect
+            $(".task-checkbox").on("change", function () {
+                let row = $(this).closest("tr");
+                let taskName = row.find(".task-name");
+                if ($(this).is(":checked")) {
+                    taskName.css("text-decoration", "line-through")
+                            .css("color", "gray");
+                } else {
+                    taskName.css("text-decoration", "none")
+                            .css("color", "black");
+                }
+            });
+
+            // Show task details in modal
+            $('#taskModal').on('show.bs.modal', function (event) {
+                var button = $(event.relatedTarget); // Task name cell
+                $('#modalTaskName').text(button.data('taskname'));
+                $('#modalTaskDate').text(button.data('taskdate'));
+                $('#modalAssignTo').text(button.data('assignto'));
+                $('#modalDueDate').text(button.data('duedate'));
+            });
+        });
+    </script>
+}
