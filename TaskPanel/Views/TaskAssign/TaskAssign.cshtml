@@ -4,54 +4,70 @@
     ViewData["Title"] = "Add New Task";
 }
 
-<h2>Add New Task</h2>
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-lg border-0 rounded-3">
+                <div class="card-header bg-primary text-white text-center">
+                    <h3 class="mb-0">Add New Task</h3>
+                </div>
+                <div class="card-body p-4">
+                    <form asp-action="TaskAssign" method="post" enctype="multipart/form-data">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="NFromUser" class="form-label fw-bold"></label>
+                                <select asp-for="NFromUser" class="form-select"
+                                        asp-items="@(new SelectList(ViewBag.Users, "NUserId", "CUserName"))">
+                                    <option value="">-- Select From User --</option>
+                                </select>
+                                <span asp-validation-for="NFromUser" class="text-danger small"></span>
+                            </div>
 
-<form asp-action="TaskAssign" method="post">
-    <div class="form-group">
-        <label asp-for="NFromUser" class="control-label"></label>
-        <select asp-for="NFromUser" class="form-control"
-                asp-items="@(new SelectList(ViewBag.Users, "NUserId", "CUserName"))">
-            <option value="">-- Select From User --</option>
-        </select>
-        <span asp-validation-for="NFromUser" class="text-danger"></span>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="NToUser" class="form-label fw-bold"></label>
+                                <select asp-for="NToUser" class="form-select"
+                                        asp-items="@(new SelectList(ViewBag.Users, "NUserId", "CUserName"))">
+                                    <option value="">-- Select To User --</option>
+                                </select>
+                                <span asp-validation-for="NToUser" class="text-danger small"></span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="CTask" class="form-label fw-bold"></label>
+                            <textarea asp-for="CTask" class="form-control" rows="4" placeholder="Enter task details..."></textarea>
+                            <span asp-validation-for="CTask" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="CFileName" class="form-label fw-bold">Attach File</label>
+                            <input type="file" name="TaskFile" class="form-control" />
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="DTaskDate" class="form-label fw-bold"></label>
+                                <input asp-for="DTaskDate" type="date" class="form-control" />
+                                <span asp-validation-for="DTaskDate" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="DDeadLine" class="form-label fw-bold"></label>
+                                <input asp-for="DDeadLine" type="date" class="form-control" />
+                                <span asp-validation-for="DDeadLine" class="text-danger small"></span>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <button type="submit" class="btn btn-success px-4">Create Task</button>
+                            <a asp-controller="TaskAssign" asp-action="ViewTask" class="btn btn-outline-primary px-4">View All Tasks</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
-
-    <div class="form-group">
-        <label asp-for="NToUser" class="control-label"></label>
-        <select asp-for="NToUser" class="form-control"
-                asp-items="@(new SelectList(ViewBag.Users, "NUserId", "CUserName"))">
-            <option value="">-- Select To User --</option>
-        </select>
-        <span asp-validation-for="NToUser" class="text-danger"></span>
-    </div>
-
-    <div class="form-group">
-        <label asp-for="CTask" class="control-label"></label>
-        <textarea asp-for="CTask" class="form-control"></textarea>
-        <span asp-validation-for="CTask" class="text-danger"></span>
-    </div>
-
-    <div class="form-group">
-        <label asp-for="CFileName" class="control-label"></label>
-        <input asp-for="CFileName" class="form-control" />
-        <span asp-validation-for="CFileName" class="text-danger"></span>
-    </div>
-
-    <div class="form-group">
-        <label asp-for="DTaskDate" class="control-label"></label>
-        <input asp-for="DTaskDate" type="date" class="form-control" />
-        <span asp-validation-for="DTaskDate" class="text-danger"></span>
-    </div>
-
-    <div class="form-group">
-        <label asp-for="DDeadLine" class="control-label"></label>
-        <input asp-for="DDeadLine" type="date" class="form-control" />
-        <span asp-validation-for="DDeadLine" class="text-danger"></span>
-    </div>
-
-    <button type="submit" class="btn btn-primary">Create Task</button>
-</form>
-<a asp-controller="TaskAssign" asp-action="ViewTask" class="btn btn-primary">View All Tasks</a>
+</div>
 
 @section Scripts {
     @{

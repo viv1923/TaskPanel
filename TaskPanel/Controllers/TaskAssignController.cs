@@ -24,17 +24,41 @@ namespace TaskPanel.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> TaskAssign(GenTaskAssign Task)
+        public async Task<IActionResult> TaskAssign(GenTaskAssign Task, IFormFile TaskFile)
         {
             if (ModelState.IsValid)
             {
+                if (TaskFile != null && TaskFile.Length > 0)
+                {
+                    // Ensure folder exists
+                    var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Upload", "TaskFiles");
+                    if (!Directory.Exists(uploadsFolder))
+                    {
+                        Directory.CreateDirectory(uploadsFolder);
+                    }
+
+                    // Generate unique file name to prevent conflicts
+                    var uniqueFileName = Guid.NewGuid().ToString() + Path.GetExtension(TaskFile.FileName);
+                    var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await TaskFile.CopyToAsync(stream);
+                    }
+
+                    // Save filename in DB (not full path)
+                    Task.CFileName = uniqueFileName;
+                }
+
                 _context.GenTaskAssigns.Add(Task);
                 await _context.SaveChangesAsync();
                 return RedirectToAction("ViewTask");
             }
-            ViewBag.Users = await _context.GenUsers.ToListAsync(); 
-            return View();
+
+            ViewBag.Users = await _context.GenUsers.ToListAsync();
+            return View(Task);
         }
+
 
         [HttpGet]
         public async Task<IActionResult> ViewTask()
