@@ -63,8 +63,36 @@ namespace TaskPanel.Controllers
         [HttpGet]
         public async Task<IActionResult> ViewTask()
         {
-            var Task = await _context.GenTaskAssigns.ToListAsync();
-            return View(Task);
+            var today = DateTime.Now.Date;
+            var taskList = await _context.GenTaskAssigns
+                .Select(t => new TaskWithUserVM
+                {
+                    NTaskNo = t.NTaskNo,
+                    CTask = t.CTask,
+                    DTaskDate = t.DTaskDate,
+                    DDeadLine = t.DDeadLine,
+                    FromUserName = _context.GenUsers
+                                    .Where(u => u.NUserId == t.NFromUser)
+                                    .Select(u => u.CUserName)
+                                    .FirstOrDefault(),
+                    ToUserName = _context.GenUsers
+                                    .Where(u => u.NUserId == t.NToUser)
+                                    .Select(u => u.CUserName)
+                                    .FirstOrDefault(),
+                    //logic for due status
+                    DueStatusColor = t.DDeadLine == null ? "bg-secondary text-white"
+                                    : t.DDeadLine.Value.Date < today ? "bg-danger text-white"
+                                    : t.DDeadLine.Value.Date == today ? "bg-warning text-dark"
+                                    : "bg-success text-white",
+
+                    DueStatusText = t.DDeadLine == null ? "No Due Date"
+                                    : t.DDeadLine.Value.Date < today ? $"Overdue: {t.DDeadLine.Value:dd-MM-yyyy}"
+                                    : t.DDeadLine.Value.Date == today ? "Due Today"
+                                    : t.DDeadLine.Value.ToString("dd-MM-yyyy")
+                })
+                .ToListAsync();
+
+            return View(taskList);
         }
     }
 }

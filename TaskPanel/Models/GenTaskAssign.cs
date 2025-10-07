@@ -27,3 +27,17 @@ public partial class GenTaskAssign
 
     public int? NToUser { get; set; }
 }
+
+public class TaskWithUserVM
+{
+    public int NTaskNo { get; set; }
+    public string? CTask { get; set; }
+    public DateTime? DTaskDate { get; set; }
+    public DateTime? DDeadLine { get; set; }
+    public string? FromUserName { get; set; }
+    public string? ToUserName { get; set; }
+
+    // for due status
+    public string? DueStatusColor { get; set; }
+    public string? DueStatusText { get; set; }
+}

@@ -173,12 +173,17 @@ namespace TaskPanel.Controllers
 
             if (user != null)
             {
+                var id = user.NUserId;
+                var name = user.CUserName;
+                var email = user.CEmailId;
+                var mobile = user.NMobileNo;
+                var description = user.CDescription;
                 // Create the security claims for this user
                 var claims = new List<Claim>
-        {
-            new Claim(ClaimTypes.Name, user.CUserName),
-            new Claim("UserId", user.NUserId.ToString())
-        };
+                {
+                    new Claim(ClaimTypes.Name, user.CUserName),
+                    new Claim("UserId", user.NUserId.ToString())
+                };
 
                 // Create the identity and principal
                 var claimsIdentity = new ClaimsIdentity(claims, "MyCookieAuth");
@@ -190,7 +195,7 @@ namespace TaskPanel.Controllers
                 return RedirectToAction("ViewTask", "TaskAssign");
             }
 
-            ModelState.AddModelError("", "Invalid username or password");
+            ViewBag.LoginError = "Invalid username or password";
             return View(model);
         }
 

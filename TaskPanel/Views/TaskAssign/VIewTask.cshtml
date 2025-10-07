@@ -1,4 +1,5 @@
-﻿@model IEnumerable<TaskPanel.Models.GenTaskAssign>
+﻿@* @model IEnumerable<TaskPanel.Models.GenTaskAssign> *@
+@model IEnumerable<TaskPanel.Models.TaskWithUserVM>
 
 @{
     ViewData["Title"] = "View Task";
@@ -15,6 +16,7 @@
                 <th>Task Name</th>
                 <th>Assigned Date</th>
                 <th>Assign To</th>
+                <th>Assign By</th>
                 <th>Due Date</th>
             </tr>
         </thead>
@@ -30,15 +32,23 @@
                         data-bs-toggle="modal"
                         data-bs-target="#taskModal"
                         data-taskname="@task.CTask"
-                        data-taskdate="@task.DTaskDate"
-                        data-assignto="@task.NToUser"
-                        data-duedate="@task.DDeadLine?.ToString("yyyy-MM-dd")">
+                        data-taskdate="@task.DTaskDate?.ToString("dd-MM-yyyy")"
+                        data-assignto="@task.ToUserName"
+                        data-assignby="@task.FromUserName"
+                        data-duedatetext="@task.DueStatusText"
+                        data-duedatecolor="@task.DueStatusColor">
                         @((task.CTask?.Length > 30) ? task.CTask.Substring(0, 30) + "..." : task.CTask)
                     </td>
-                    <td>@task.DTaskDate</td>
-                    <td>@task.NToUser</td>
-                    <td>@task.DDeadLine?.ToString("yyyy-MM-dd")</td>
+                    <td>@task.DTaskDate?.ToString("dd-MM-yyyy")</td>
+                    <td>@task.ToUserName</td>
+                    <td>@task.FromUserName</td>
+                    <td>
+                        <span class="badge rounded-pill @task.DueStatusColor px-3 py-2">
+                            @task.DueStatusText
+                        </span>
+                    </td>
                 </tr>
+
             }
         </tbody>
     </table>
@@ -66,9 +76,13 @@
 
                     <dt class="col-sm-3 text-end">Assigned To:</dt>
                     <dd class="col-sm-9" id="modalAssignTo"></dd>
+                    <dt class="col-sm-3 text-end">Assigned By(from):</dt>
+                    <dd class="col-sm-9" id="modalAssignBy"></dd>
 
                     <dt class="col-sm-3 text-end">Due Date:</dt>
-                    <dd class="col-sm-9" id="modalDueDate"></dd>
+                    <dd class="col-sm-9">
+                        <span id="modalDueDate" class="badge rounded-pill px-3 py-2"></span>
+                    </dd>
                 </dl>
             </div>
             <div class="modal-footer">
@@ -101,13 +115,21 @@
             });
 
             // Show task details in modal
-            $('#taskModal').on('show.bs.modal', function (event) {
-                var button = $(event.relatedTarget); // Task name cell
-                $('#modalTaskName').text(button.data('taskname'));
-                $('#modalTaskDate').text(button.data('taskdate'));
-                $('#modalAssignTo').text(button.data('assignto'));
-                $('#modalDueDate').text(button.data('duedate'));
-            });
+        $('#taskModal').on('show.bs.modal', function (event) {
+            var button = $(event.relatedTarget); // Task name cell
+
+            $('#modalTaskName').text(button.data('taskname'));
+            $('#modalTaskDate').text(button.data('taskdate'));
+            $('#modalAssignTo').text(button.data('assignto'));
+            $('#modalAssignBy').text(button.data('assignby'));
+
+            // Update modal due date with badge color
+            var dueSpan = $('#modalDueDate');
+            dueSpan.text(button.data('duedatetext'));
+            dueSpan.removeClass(); // remove previous classes
+            dueSpan.addClass('badge rounded-pill px-3 py-2 ' + button.data('duedatecolor'));
+        });
+
         });
     </script>
 }
