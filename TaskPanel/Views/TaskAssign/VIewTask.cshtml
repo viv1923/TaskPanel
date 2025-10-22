@@ -4,7 +4,29 @@
 @{
     ViewData["Title"] = "View Task";
 }
+<style>
+    .self-assigned {
+        position: relative;
+        transition: all 0.3s ease;
+    }
 
+        .self-assigned.slide-left {
+            transform: translateX(-30px);
+        }
+
+    .delete-icon-cell {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+
+    td a.btn-outline-primary {
+        padding: 4px 8px;
+        font-size: 0.85rem;
+    }
+
+</style>
 <h2 class="mb-4 text-primary fw-bold">📋 Task List</h2>
 
 <div class="table-responsive" style="max-height: 400px; overflow-y: auto; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
@@ -18,12 +40,16 @@
                 <th>Assign To</th>
                 <th>Assign By</th>
                 <th>Due Date</th>
+                <th>File</th>
+
             </tr>
         </thead>
         <tbody>
             @foreach (var task in Model)
             {
-                <tr class="task-row">
+                bool isSelfAssigned = task.FromUserName == task.ToUserName;
+
+                <tr class="task-row @(isSelfAssigned ? "self-assigned" : "")" data-task-id="@task.NTaskNo">
                     <td>
                         <input type="checkbox" class="task-checkbox" data-task-id="@task.NTaskNo" />
                     </td>
@@ -47,16 +73,41 @@
                             @task.DueStatusText
                         </span>
                     </td>
-                </tr>
+                    <td>
+                        @if (!string.IsNullOrEmpty(task.CFileName))
+                        {
+                            <a href="@Url.Action("DownloadFile", "TaskAssign", new { fileName = task.CFileName })"
+                               target="_blank"
+                               class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-paperclip"></i> Open
+                            </a>
+                        }
+                        else
+                        {
+                            <span class="text-muted">No File</span>
+                        }
+                    </td>
 
+                    @* Delete icon (only visible for self-assigned tasks) *@
+                    @if (isSelfAssigned)
+                    {
+                        <td class="delete-icon-cell" style="display: none;">
+                            <button class="btn btn-sm btn-danger delete-task-btn">
+                                <i class="bi bi-trash-fill"></i>
+                            </button>
+                        </td>
+                    }
+                    else
+                    {
+                        <td></td>
+                    }
+                </tr>
             }
         </tbody>
+
     </table>
 </div>
 
-<div class="mt-3">
-    <button class="btn btn-danger px-4">Delete Selected</button>
-</div>
 
 <!-- Task Details Modal -->
 <div class="modal fade" id="taskModal" tabindex="-1" aria-labelledby="taskModalLabel" aria-hidden="true">
@@ -131,5 +182,44 @@
         });
 
         });
+                $(document).ready(function () {
+            // Slide left and show delete icon for self-assigned tasks
+            $(".self-assigned").hover(
+                function () {
+                    $(this).addClass("slide-left");
+                    $(this).find(".delete-icon-cell").show();
+                },
+                function () {
+                    $(this).removeClass("slide-left");
+                    $(this).find(".delete-icon-cell").hide();
+                }
+            );
+
+            // Delete task using AJAX
+            $(".delete-task-btn").click(function (e) {
+                e.preventDefault();
+                let row = $(this).closest("tr");
+                let taskId = row.data("task-id");
+
+                if (confirm("Are you sure you want to delete this task?")) {
+                    $.ajax({
+                        url: '/TaskAssign/DeleteTask',  // Adjust controller route if needed
+                        type: 'POST',
+                        data: { id: taskId },
+                        success: function (res) {
+                            if (res.success) {
+                                row.fadeOut(300, function () { $(this).remove(); });
+                            } else {
+                                alert(res.message || "Failed to delete the task.");
+                            }
+                        },
+                        error: function () {
+                            alert("Error occurred while deleting the task.");
+                        }
+                    });
+                }
+            });
+        });
+
     </script>
 }

@@ -19,25 +19,49 @@ namespace TaskPanel.Controllers
         [HttpGet]
         public async Task<IActionResult> TaskAssign()
         {
+            // Load users for dropdown (still used for NToUser)
             ViewBag.Users = await _context.GenUsers.ToListAsync();
-            return View();
+
+            // Get current logged-in user info from claims or cookies
+            var userId = User.Claims.FirstOrDefault(c => c.Type == "UserId")?.Value;
+            var userName = User.Identity?.Name;
+
+            // Pre-fill the model
+            var model = new GenTaskAssign
+            {
+                NFromUser = Convert.ToInt32(userId),
+                DTaskDate = DateTime.Now // current date
+            };
+
+            return View(model);
         }
 
         [HttpPost]
-        public async Task<IActionResult> TaskAssign(GenTaskAssign Task, IFormFile TaskFile)
+        public async Task<IActionResult> TaskAssign(GenTaskAssign Task, IFormFile? TaskFile)
         {
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState
+                    .Where(e => e.Value.Errors.Count > 0)
+                    .Select(e => new { Field = e.Key, Errors = e.Value.Errors.Select(er => er.ErrorMessage) })
+                    .ToList();
+
+                Console.WriteLine("Model validation failed:");
+                foreach (var err in errors)
+                    Console.WriteLine($"{err.Field}: {string.Join(", ", err.Errors)}");
+
+                ViewBag.Users = await _context.GenUsers.ToListAsync();
+                return View(Task);
+            }
+
             if (ModelState.IsValid)
             {
                 if (TaskFile != null && TaskFile.Length > 0)
                 {
-                    // Ensure folder exists
                     var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Upload", "TaskFiles");
                     if (!Directory.Exists(uploadsFolder))
-                    {
                         Directory.CreateDirectory(uploadsFolder);
-                    }
 
-                    // Generate unique file name to prevent conflicts
                     var uniqueFileName = Guid.NewGuid().ToString() + Path.GetExtension(TaskFile.FileName);
                     var filePath = Path.Combine(uploadsFolder, uniqueFileName);
 
@@ -46,9 +70,12 @@ namespace TaskPanel.Controllers
                         await TaskFile.CopyToAsync(stream);
                     }
 
-                    // Save filename in DB (not full path)
                     Task.CFileName = uniqueFileName;
                 }
+
+                // Override FromUser just in case someone tampers with form
+                var userId = User.Claims.FirstOrDefault(c => c.Type == "UserId")?.Value;
+                Task.NFromUser = Convert.ToInt32(userId);
 
                 _context.GenTaskAssigns.Add(Task);
                 await _context.SaveChangesAsync();
@@ -71,6 +98,7 @@ namespace TaskPanel.Controllers
                     CTask = t.CTask,
                     DTaskDate = t.DTaskDate,
                     DDeadLine = t.DDeadLine,
+                    CFileName = t.CFileName,
                     FromUserName = _context.GenUsers
                                     .Where(u => u.NUserId == t.NFromUser)
                                     .Select(u => u.CUserName)
@@ -94,5 +122,34 @@ namespace TaskPanel.Controllers
 
             return View(taskList);
         }
+
+        [HttpGet]
+        public IActionResult DownloadFile(string fileName)
+        {
+            if (string.IsNullOrEmpty(fileName))
+                return NotFound();
+
+            var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Upload", "TaskFiles", fileName);
+
+            if (!System.IO.File.Exists(filePath))
+                return NotFound();
+
+            var contentType = "application/octet-stream";
+            return PhysicalFile(filePath, contentType, fileName);
+        }
+
+        [HttpPost]
+        public IActionResult DeleteTask(int id)
+        {
+            var task = _context.GenTaskAssigns.FirstOrDefault(t => t.NTaskNo == id);
+            if (task == null)
+                return Json(new { success = false, message = "Task not found" });
+
+            _context.GenTaskAssigns.Remove(task);
+            _context.SaveChanges();
+
+            return Json(new { success = true });
+        }
+
     }
 }

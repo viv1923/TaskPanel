@@ -57,7 +57,7 @@ namespace TaskPanel.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("NUserId,CUserName,CPassword,CEmailId,NMobileNo,CDescription")] GenUser genUser)
+        public async Task<IActionResult> Create([Bind("NUserId,CUserName,CPassword,CEmailId,NMobileNo,CDescription")] Models.GenUser genUser)
         {
             if (ModelState.IsValid)
             {
@@ -89,7 +89,7 @@ namespace TaskPanel.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(long id, [Bind("NUserId,CUserName,CPassword,CEmailId,NMobileNo,CDescription")] GenUser genUser)
+        public async Task<IActionResult> Edit(long id, [Bind("NUserId,CUserName,CPassword,CEmailId,NMobileNo,CDescription")] Models.GenUser genUser)
         {
             if (id != genUser.NUserId)
             {
@@ -182,7 +182,8 @@ namespace TaskPanel.Controllers
                 var claims = new List<Claim>
                 {
                     new Claim(ClaimTypes.Name, user.CUserName),
-                    new Claim("UserId", user.NUserId.ToString())
+                    new Claim("UserId", user.NUserId.ToString()),           // custom UserId
+                    new Claim(ClaimTypes.Email, user.CEmailId ?? "")
                 };
 
                 // Create the identity and principal

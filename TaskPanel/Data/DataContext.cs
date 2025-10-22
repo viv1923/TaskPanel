@@ -17,10 +17,11 @@ public partial class DataContext : DbContext
     }
 
     public virtual DbSet<GenUser> GenUsers { get; set; }
+
     public virtual DbSet<GenTaskAssign> GenTaskAssigns { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        => optionsBuilder.UseSqlServer("Name=ConnectionStrings:defConn");
+        => optionsBuilder.UseSqlServer("Name=defConn");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -45,7 +46,6 @@ public partial class DataContext : DbContext
             entity.Property(e => e.NMobileNo).HasColumnName("nMobileNo");
         });
 
-        // GenTaskAssign config
         modelBuilder.Entity<GenTaskAssign>(entity =>
         {
             entity.HasKey(e => e.NTaskNo).HasName("PK__GenTaskA__3F1F420600566DB9");
@@ -72,9 +72,9 @@ public partial class DataContext : DbContext
             entity.Property(e => e.NApprove).HasColumnName("nApprove");
             entity.Property(e => e.NComplete).HasColumnName("nComplete");
             entity.Property(e => e.NFromUser).HasColumnName("nFromUser");
+            entity.Property(e => e.NTaskType).HasColumnName("nTaskType");
             entity.Property(e => e.NToUser).HasColumnName("nToUser");
         });
-
 
         OnModelCreatingPartial(modelBuilder);
     }

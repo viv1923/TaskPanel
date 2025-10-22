@@ -26,6 +26,8 @@ public partial class GenTaskAssign
     public int? NFromUser { get; set; }
 
     public int? NToUser { get; set; }
+
+    public int? NTaskType { get; set; }
 }
 
 public class TaskWithUserVM
@@ -37,7 +39,10 @@ public class TaskWithUserVM
     public string? FromUserName { get; set; }
     public string? ToUserName { get; set; }
 
-    // for due status
+    // New props for due status
     public string? DueStatusColor { get; set; }
     public string? DueStatusText { get; set; }
+    public string? CFileName { get; set; }
+
 }
+

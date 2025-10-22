@@ -15,16 +15,13 @@
                     <form asp-action="TaskAssign" method="post" enctype="multipart/form-data">
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label asp-for="NFromUser" class="form-label fw-bold"></label>
-                                <select asp-for="NFromUser" class="form-select"
-                                        asp-items="@(new SelectList(ViewBag.Users, "NUserId", "CUserName"))">
-                                    <option value="">-- Select From User --</option>
-                                </select>
-                                <span asp-validation-for="NFromUser" class="text-danger small"></span>
+                                <label asp-for="NFromUser" class="form-label fw-bold">From User</label>
+                                <input type="text" class="form-control" value="@User.Identity?.Name" readonly />
+                                <input type="hidden" asp-for="NFromUser" />
                             </div>
 
                             <div class="col-md-6 mb-3">
-                                <label asp-for="NToUser" class="form-label fw-bold"></label>
+                                <label asp-for="NToUser" class="form-label fw-bold">To User</label>
                                 <select asp-for="NToUser" class="form-select"
                                         asp-items="@(new SelectList(ViewBag.Users, "NUserId", "CUserName"))">
                                     <option value="">-- Select To User --</option>
@@ -34,7 +31,7 @@
                         </div>
 
                         <div class="mb-3">
-                            <label asp-for="CTask" class="form-label fw-bold"></label>
+                            <label asp-for="CTask" class="form-label fw-bold">Write TAsk</label>
                             <textarea asp-for="CTask" class="form-control" rows="4" placeholder="Enter task details..."></textarea>
                             <span asp-validation-for="CTask" class="text-danger small"></span>
                         </div>
@@ -46,13 +43,12 @@
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label asp-for="DTaskDate" class="form-label fw-bold"></label>
-                                <input asp-for="DTaskDate" type="date" class="form-control" />
-                                <span asp-validation-for="DTaskDate" class="text-danger small"></span>
+                                <label asp-for="DTaskDate" class="form-label fw-bold">Assigned date</label>
+                                <input asp-for="DTaskDate" type="date" class="form-control" readonly />
                             </div>
 
                             <div class="col-md-6 mb-3">
-                                <label asp-for="DDeadLine" class="form-label fw-bold"></label>
+                                <label asp-for="DDeadLine" class="form-label fw-bold">Dead line</label>
                                 <input asp-for="DDeadLine" type="date" class="form-control" />
                                 <span asp-validation-for="DDeadLine" class="text-danger small"></span>
                             </div>
