@@ -151,5 +151,161 @@ namespace TaskPanel.Controllers
             return Json(new { success = true });
         }
 
+        // --------------------------------------------
+        // 📌 DAILY TASK (Multiple Add + Single Parent Entry)
+        // --------------------------------------------
+
+        [HttpPost]
+        public async Task<IActionResult> SaveDailyTasks([FromBody] List<string> tasks)
+        {
+            if (tasks == null || tasks.Count == 0)
+                return Json(new { success = false, message = "Please add at least one task." });
+
+            var userId = User.Claims.FirstOrDefault(c => c.Type == "UserId")?.Value;
+            if (string.IsNullOrEmpty(userId))
+                return Json(new { success = false, message = "User not logged in." });
+
+            int currentUserId = Convert.ToInt32(userId);
+            var today = DateTime.Now.Date;
+
+            // Step 1️⃣ - Check if today's self-task entry already exists
+            var existingTaskAssign = await _context.GenTaskAssigns
+                .FirstOrDefaultAsync(t => t.NFromUser == currentUserId &&
+                                          t.NToUser == currentUserId &&
+                                          t.DTaskDate.Value.Date == today);
+
+            if (existingTaskAssign == null)
+            {
+                // Create a new parent entry
+                existingTaskAssign = new GenTaskAssign
+                {
+                    NFromUser = currentUserId,
+                    NToUser = currentUserId,
+                    NTaskType = 1,
+                    CTask = "Self Task",
+                    DTaskDate = today
+                };
+
+                _context.GenTaskAssigns.Add(existingTaskAssign);
+                await _context.SaveChangesAsync(); // to get new NTaskNo
+            }
+
+            // Step 2️⃣ - Add child tasks linked to same parent
+            foreach (var taskText in tasks)
+            {
+                if (!string.IsNullOrWhiteSpace(taskText))
+                {
+                    var newTask = new GenDailyTask
+                    {
+                        NTask = existingTaskAssign.NTaskNo,
+                        CDailyTask = taskText.Trim()
+                    };
+                    _context.GenDailyTasks.Add(newTask);
+                }
+            }
+
+            await _context.SaveChangesAsync();
+            return Json(new { success = true, message = "Daily tasks saved successfully!" });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetTodayDailyTasks()
+        {
+            var userId = User.Claims.FirstOrDefault(c => c.Type == "UserId")?.Value;
+            if (string.IsNullOrEmpty(userId))
+                return Json(new { success = false, message = "User not logged in." });
+
+            int currentUserId = Convert.ToInt32(userId);
+            var today = DateTime.Now.Date;
+
+            // Get today's parent
+            var todayTaskAssign = await _context.GenTaskAssigns
+                .FirstOrDefaultAsync(t => t.NFromUser == currentUserId &&
+                                          t.NToUser == currentUserId &&
+                                          t.DTaskDate.Value.Date == today);
+
+            if (todayTaskAssign == null)
+                return Json(new { success = true, data = new List<object>() });
+
+            // Get child daily tasks
+            var dailyTasks = await _context.GenDailyTasks
+                .Where(t => t.NTask == todayTaskAssign.NTaskNo)
+                .Select(t => new { t.NUcode, t.CDailyTask })
+                .ToListAsync();
+
+            return Json(new { success = true, data = dailyTasks });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteDailyTask(int id)
+        {
+            var task = await _context.GenDailyTasks.FindAsync(id);
+            if (task == null)
+                return Json(new { success = false, message = "Task not found." });
+
+            _context.GenDailyTasks.Remove(task);
+            await _context.SaveChangesAsync();
+
+            return Json(new { success = true, message = "Task deleted successfully." });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> EditDailyTask(int id, string CDailyTask)
+        {
+            var task = await _context.GenDailyTasks.FindAsync(id);
+            if (task == null)
+                return Json(new { success = false, message = "Task not found." });
+
+            task.CDailyTask = CDailyTask;
+            _context.GenDailyTasks.Update(task);
+            await _context.SaveChangesAsync();
+
+            return Json(new { success = true, message = "Task updated successfully." });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetDailyTasksForCalander(DateTime date)
+        {
+            var userId = User.Claims.FirstOrDefault(c => c.Type == "UserId")?.Value;
+            if (string.IsNullOrEmpty(userId))
+                return Json(new { success = false, message = "User not logged in." });
+
+            int currentUserId = Convert.ToInt32(userId);
+            // Convert date to yyyy-MM-dd format
+            string formattedDate = date.ToString("yyyy-MM-dd");
+
+            // Step 1: Get the self-assigned task for the selected date
+            var sqlAssign = @"
+        SELECT TOP 1 * 
+        FROM GenTaskAssign
+        WHERE NFromUser = {0} 
+          AND NToUser = {0} 
+          AND CAST(DTaskDate AS DATE) = {1}";
+
+            var taskAssign = await _context.GenTaskAssigns
+                .FromSqlRaw(sqlAssign, currentUserId, formattedDate)
+                .FirstOrDefaultAsync();
+
+            if (taskAssign == null)
+                return Json(new { success = true, data = new List<object>() });
+
+            // Step 2: Get related daily subtasks using raw SQL
+            var sqlDailyTasks = @"
+                SELECT NUcode, CDailyTask 
+                FROM Gen_DailyTask 
+                WHERE NTask = {0}";
+
+            var dailyTasks = await _context.GenDailyTasks
+                .FromSqlRaw(sqlDailyTasks, taskAssign.NTaskNo)
+                .Select(t => new { t.NUcode, t.CDailyTask })
+                .ToListAsync();
+
+            return Json(new { success = true, data = dailyTasks });
+        }
+
+
+
+
+
     }
 }

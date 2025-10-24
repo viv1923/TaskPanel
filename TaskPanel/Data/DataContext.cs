@@ -20,6 +20,8 @@ public partial class DataContext : DbContext
 
     public virtual DbSet<GenTaskAssign> GenTaskAssigns { get; set; }
 
+    public virtual DbSet<GenDailyTask> GenDailyTasks { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         => optionsBuilder.UseSqlServer("Name=defConn");
 
@@ -74,6 +76,18 @@ public partial class DataContext : DbContext
             entity.Property(e => e.NFromUser).HasColumnName("nFromUser");
             entity.Property(e => e.NTaskType).HasColumnName("nTaskType");
             entity.Property(e => e.NToUser).HasColumnName("nToUser");
+        });
+
+        modelBuilder.Entity<GenDailyTask>(entity =>
+        {
+            entity.HasKey(e => e.NUcode).HasName("PK__Gen_Dail__76EFF0BA1BD79A79");
+
+            entity.ToTable("Gen_DailyTask");
+
+            entity.Property(e => e.NUcode).HasColumnName("nUcode");
+            entity.Property(e => e.CDailyTask).HasColumnName("cDailyTask");
+            entity.Property(e => e.NTask).HasColumnName("nTask");
+            entity.Property(e => e.NUserId).HasColumnName("nUserId");
         });
 
         OnModelCreatingPartial(modelBuilder);

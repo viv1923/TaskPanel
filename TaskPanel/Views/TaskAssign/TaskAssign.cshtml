@@ -4,14 +4,59 @@
     ViewData["Title"] = "Add New Task";
 }
 
+<style>
+    /* Base style for tabs */
+    #taskTabs .nav-link {
+        color: black; /* Default text color */
+        background-color: lightslategray; /* Default background */
+        border: 1px solid #dee2e6; /* Border to make tabs visible */
+        margin-right: 2px; /* Small spacing between tabs */
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+
+        /* Hover effect */
+        #taskTabs .nav-link:hover {
+            color: white;
+            background-color: black;
+        }
+
+        /* Active tab */
+        #taskTabs .nav-link.active {
+            color: white;
+            background-color: black;
+            border-color: black;
+        }
+
+        /* Optional: remove the bottom border for active tab to connect with content */
+        #taskTabs .nav-link.active {
+            border-bottom: 1px solid white;
+        }
+</style>
 <div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-lg-8">
-            <div class="card shadow-lg border-0 rounded-3">
-                <div class="card-header bg-primary text-white text-center">
-                    <h3 class="mb-0">Add New Task</h3>
-                </div>
-                <div class="card-body p-4">
+    <div class="card shadow-lg border-0 rounded-3">
+        <div class="card-header bg-primary text-white text-center">
+            <h3 class="mb-0">Task Management Panel</h3>
+        </div>
+
+        <div class="card-body p-4">
+            <!-- Tabs -->
+            <ul class="nav nav-tabs" id="taskTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="assign-tab" data-bs-toggle="tab" data-bs-target="#assignTask" type="button" role="tab">
+                        Assign Task to Others
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="self-tab" data-bs-toggle="tab" data-bs-target="#selfTask" type="button" role="tab">
+                        Add Self (Daily) Tasks
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content mt-4" id="taskTabsContent">
+                <!-- ✅ Tab 1: Assign Task -->
+                <div class="tab-pane fade show active" id="assignTask" role="tabpanel" aria-labelledby="assign-tab">
                     <form asp-action="TaskAssign" method="post" enctype="multipart/form-data">
                         <div class="row">
                             <div class="col-md-6 mb-3">
@@ -31,7 +76,7 @@
                         </div>
 
                         <div class="mb-3">
-                            <label asp-for="CTask" class="form-label fw-bold">Write TAsk</label>
+                            <label asp-for="CTask" class="form-label fw-bold">Task Details</label>
                             <textarea asp-for="CTask" class="form-control" rows="4" placeholder="Enter task details..."></textarea>
                             <span asp-validation-for="CTask" class="text-danger small"></span>
                         </div>
@@ -43,30 +88,177 @@
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label asp-for="DTaskDate" class="form-label fw-bold">Assigned date</label>
+                                <label asp-for="DTaskDate" class="form-label fw-bold">Assigned Date</label>
                                 <input asp-for="DTaskDate" type="date" class="form-control" readonly />
                             </div>
 
                             <div class="col-md-6 mb-3">
-                                <label asp-for="DDeadLine" class="form-label fw-bold">Dead line</label>
+                                <label asp-for="DDeadLine" class="form-label fw-bold">Deadline</label>
                                 <input asp-for="DDeadLine" type="date" class="form-control" />
                                 <span asp-validation-for="DDeadLine" class="text-danger small"></span>
                             </div>
                         </div>
 
-                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <div class="d-flex justify-content-end gap-2">
                             <button type="submit" class="btn btn-success px-4">Create Task</button>
                             <a asp-controller="TaskAssign" asp-action="ViewTask" class="btn btn-outline-primary px-4">View All Tasks</a>
                         </div>
                     </form>
                 </div>
-            </div>
+
+                <!-- ✅ Tab 2: Self Daily Tasks -->
+                <div class="tab-pane fade" id="selfTask" role="tabpanel" aria-labelledby="self-tab">
+                    <div class="mt-3">
+                        <div class="mb-3 d-flex">
+                            <input type="text" id="txtDailyTask" class="form-control me-2" placeholder="Enter a task..." />
+                            <button type="button" id="btnAddTask" class="btn btn-primary">Add</button>
+                        </div>
+
+                        <table class="table table-bordered table-striped" id="tblDailyTask">
+                            <thead class="table-light">
+                                <tr>
+                                    <th width="5%">#</th>
+                                    <th>Task</th>
+                                    <th width="20%">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+
+                        <div class="text-end mt-3">
+                            <button class="btn btn-success" id="btnSaveAll">Save All</button>
+                        </div>
+                    </div>
+                </div>
+            </div> <!-- end of tab-content -->
         </div>
     </div>
 </div>
 
 @section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
+    <script>
+        $(document).ready(function () {
+            let tempTasks = [];
+
+            loadTodayTasks();
+
+            // ➕ Add new temporary task
+            $('#btnAddTask').click(function () {
+                var taskText = $('#txtDailyTask').val().trim();
+                if (taskText === "") {
+                    alert("Please enter a task.");
+                    return;
+                }
+
+                tempTasks.push(taskText);
+                renderTempTasks();
+                $('#txtDailyTask').val('');
+            });
+
+            // 💾 Save all added tasks to DB
+            $('#btnSaveAll').click(function () {
+                if (tempTasks.length === 0) {
+                    alert("No tasks to save.");
+                    return;
+                }
+
+                $.ajax({
+                    url: '/TaskAssign/SaveDailyTasks',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(tempTasks),
+                    success: function (res) {
+                        alert(res.message);
+                        if (res.success) {
+                            tempTasks = [];
+                            loadTodayTasks();
+                        }
+                    }
+                });
+            });
+
+            // 🔄 Load today's existing saved tasks
+            function loadTodayTasks() {
+                $.get('/TaskAssign/GetTodayDailyTasks', function (res) {
+                    if (res.success) {
+                        var rows = '';
+                        $.each(res.data, function (i, item) {
+                            rows += `<tr>
+                                <td>${i + 1}</td>
+                                <td contenteditable="true" class="editable" data-id="${item.nUcode}">${item.cDailyTask}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-success save" data-id="${item.nUcode}">Save</button>
+                                    <button class="btn btn-sm btn-danger delete" data-id="${item.nUcode}">Delete</button>
+                                </td>
+                            </tr>`;
+                        });
+                        $('#tblDailyTask tbody').html(rows);
+                    }
+                });
+            }
+
+            // 🧱 Render temporary unsaved tasks (✅ Fixed duplication)
+            function renderTempTasks() {
+                let html = '';
+
+                // First, render unsaved temporary tasks
+                $.each(tempTasks, function (i, t) {
+                    html += `<tr>
+                        <td>New</td>
+                        <td>${t}</td>
+                        <td><button class="btn btn-sm btn-danger remove-temp" data-index="${i}">Remove</button></td>
+                    </tr>`;
+                });
+
+                // Now load the saved tasks below
+                $.get('/TaskAssign/GetTodayDailyTasks', function (res) {
+                    if (res.success) {
+                        $.each(res.data, function (i, item) {
+                            html += `<tr>
+                                <td>${i + 1}</td>
+                                <td contenteditable="true" class="editable" data-id="${item.nUcode}">${item.cDailyTask}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-success save" data-id="${item.nUcode}">Save</button>
+                                    <button class="btn btn-sm btn-danger delete" data-id="${item.nUcode}">Delete</button>
+                                </td>
+                            </tr>`;
+                        });
+                    }
+                    $('#tblDailyTask tbody').html(html);
+                });
+            }
+
+            // ❌ Remove unsaved temp task
+            $(document).on('click', '.remove-temp', function () {
+                var index = $(this).data('index');
+                tempTasks.splice(index, 1);
+                renderTempTasks();
+            });
+
+            // 💾 Save edited task
+            $(document).on('click', '.save', function () {
+                var id = $(this).data('id');
+                var text = $(this).closest('tr').find('.editable').text().trim();
+
+                $.post('/TaskAssign/EditDailyTask', { id: id, CDailyTask: text }, function (res) {
+                    alert(res.message);
+                    loadTodayTasks();
+                });
+            });
+
+            // ❌ Delete saved task
+            $(document).on('click', '.delete', function () {
+                if (!confirm("Delete this task?")) return;
+                var id = $(this).data('id');
+
+                $.post('/TaskAssign/DeleteDailyTask', { id: id }, function (res) {
+                    if (res.success) loadTodayTasks();
+                    else alert(res.message);
+                });
+            });
+        });
+    </script>
+
+
+    @await Html.PartialAsync("_ValidationScriptsPartial")
 }

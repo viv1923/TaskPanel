@@ -1,10 +1,11 @@
-﻿@* @model IEnumerable<TaskPanel.Models.GenTaskAssign> *@
-@model IEnumerable<TaskPanel.Models.TaskWithUserVM>
+﻿@model IEnumerable<TaskPanel.Models.TaskWithUserVM>
 
 @{
     ViewData["Title"] = "View Task";
 }
+
 <style>
+    /* --- General Styles --- */
     .self-assigned {
         position: relative;
         transition: all 0.3s ease;
@@ -26,96 +27,197 @@
         font-size: 0.85rem;
     }
 
+    /* --- Calendar Styles --- */
+    .calendar {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 10px;
+        padding: 20px;
+    }
+
+    .calendar-day {
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        height: 100px;
+        text-align: center;
+        padding-top: 10px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        background-color: #fafafa;
+    }
+
+        .calendar-day:hover {
+            background-color: #007bff;
+            color: white;
+            transform: scale(1.05);
+        }
+
+        .calendar-day.today {
+            border: 2px solid #007bff;
+            background-color: #e7f1ff;
+        }
+
+    .task-popup {
+        display: none;
+        position: absolute;
+        background: white;
+        border: 1px solid #ddd;
+        padding: 10px;
+        border-radius: 10px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        z-index: 10;
+    }
+
+    /* Base style for tabs */
+    #taskTabs .nav-link {
+        color: black; /* Default text color */
+        background-color: lightslategray; /* Default background */
+        border: 1px solid #dee2e6; /* Border to make tabs visible */
+        margin-right: 2px; /* Small spacing between tabs */
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+
+        /* Hover effect */
+        #taskTabs .nav-link:hover {
+            color: white;
+            background-color: black;
+        }
+
+        /* Active tab */
+        #taskTabs .nav-link.active {
+            color: white;
+            background-color: black;
+            border-color: black;
+        }
+
+        /* Optional: remove the bottom border for active tab to connect with content */
+        #taskTabs .nav-link.active {
+            border-bottom: 1px solid white;
+        }
 </style>
-<h2 class="mb-4 text-primary fw-bold">📋 Task List</h2>
 
-<div class="table-responsive" style="max-height: 400px; overflow-y: auto; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-    <table class="table table-hover align-middle text-center">
-        <thead class="table-dark sticky-top">
-            <tr>
-                <th style="width: 80px;">Select</th>
-                <th>Task No</th>
-                <th>Task Name</th>
-                <th>Assigned Date</th>
-                <th>Assign To</th>
-                <th>Assign By</th>
-                <th>Due Date</th>
-                <th>File</th>
+<h2 class="mb-4 text-primary fw-bold">📋 Task Management</h2>
 
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var task in Model)
-            {
-                bool isSelfAssigned = task.FromUserName == task.ToUserName;
+<!-- Tabs Navigation -->
+<ul class="nav nav-tabs mb-4" id="taskTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="allotted-tab" data-bs-toggle="tab" data-bs-target="#allotted" type="button" role="tab">🧾 Task Allotted</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="daily-tab" data-bs-toggle="tab" data-bs-target="#daily" type="button" role="tab">📅 Daily Task</button>
+    </li>
+</ul>
 
-                <tr class="task-row @(isSelfAssigned ? "self-assigned" : "")" data-task-id="@task.NTaskNo">
-                    <td>
-                        <input type="checkbox" class="task-checkbox" data-task-id="@task.NTaskNo" />
-                    </td>
-                    <td>@task.NTaskNo</td>
-                    <td class="task-name text-primary fw-semibold" style="cursor: pointer;"
-                        data-bs-toggle="modal"
-                        data-bs-target="#taskModal"
-                        data-taskname="@task.CTask"
-                        data-taskdate="@task.DTaskDate?.ToString("dd-MM-yyyy")"
-                        data-assignto="@task.ToUserName"
-                        data-assignby="@task.FromUserName"
-                        data-duedatetext="@task.DueStatusText"
-                        data-duedatecolor="@task.DueStatusColor">
-                        @((task.CTask?.Length > 30) ? task.CTask.Substring(0, 30) + "..." : task.CTask)
-                    </td>
-                    <td>@task.DTaskDate?.ToString("dd-MM-yyyy")</td>
-                    <td>@task.ToUserName</td>
-                    <td>@task.FromUserName</td>
-                    <td>
-                        <span class="badge rounded-pill @task.DueStatusColor px-3 py-2">
-                            @task.DueStatusText
-                        </span>
-                    </td>
-                    <td>
-                        @if (!string.IsNullOrEmpty(task.CFileName))
-                        {
-                            <a href="@Url.Action("DownloadFile", "TaskAssign", new { fileName = task.CFileName })"
-                               target="_blank"
-                               class="btn btn-sm btn-outline-primary">
-                                <i class="bi bi-paperclip"></i> Open
-                            </a>
-                        }
-                        else
-                        {
-                            <span class="text-muted">No File</span>
-                        }
-                    </td>
+<div class="tab-content" id="taskTabsContent">
 
-                    @* Delete icon (only visible for self-assigned tasks) *@
-                    @if (isSelfAssigned)
+    <!-- ---------------- Task Allotted Tab ---------------- -->
+    <div class="tab-pane fade show active" id="allotted" role="tabpanel">
+        <div class="table-responsive" style="max-height: 400px; overflow-y: auto; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            <table class="table table-hover align-middle text-center">
+                <thead class="table-dark sticky-top">
+                    <tr>
+                        <th style="width: 80px;">Select</th>
+                        <th>Task No</th>
+                        <th>Task Name</th>
+                        <th>Assigned Date</th>
+                        <th>Assign To</th>
+                        <th>Assign By</th>
+                        <th>Due Date</th>
+                        <th>File</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var task in Model)
                     {
-                        <td class="delete-icon-cell" style="display: none;">
-                            <button class="btn btn-sm btn-danger delete-task-btn">
-                                <i class="bi bi-trash-fill"></i>
-                            </button>
-                        </td>
-                    }
-                    else
-                    {
-                        <td></td>
-                    }
-                </tr>
-            }
-        </tbody>
+                        bool isSelfAssigned = task.FromUserName == task.ToUserName;
 
-    </table>
+                        <tr class="task-row @(isSelfAssigned ? "self-assigned" : "")" data-task-id="@task.NTaskNo">
+                            <td>
+                                <input type="checkbox" class="task-checkbox" data-task-id="@task.NTaskNo" />
+                            </td>
+                            <td>@task.NTaskNo</td>
+                            <td class="task-name text-primary fw-semibold" style="cursor: pointer;"
+                                data-bs-toggle="modal"
+                                data-bs-target="#taskModal"
+                                data-taskname="@task.CTask"
+                                data-taskdate="@task.DTaskDate?.ToString("dd-MM-yyyy")"
+                                data-assignto="@task.ToUserName"
+                                data-assignby="@task.FromUserName"
+                                data-duedatetext="@task.DueStatusText"
+                                data-duedatecolor="@task.DueStatusColor">
+                                @((task.CTask?.Length > 30) ? task.CTask.Substring(0, 30) + "..." : task.CTask)
+                            </td>
+                            <td>@task.DTaskDate?.ToString("dd-MM-yyyy")</td>
+                            <td>@task.ToUserName</td>
+                            <td>@task.FromUserName</td>
+                            <td>
+                                <span class="badge rounded-pill @task.DueStatusColor px-3 py-2">
+                                    @task.DueStatusText
+                                </span>
+                            </td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(task.CFileName))
+                                {
+                                    <a href="@Url.Action("DownloadFile", "TaskAssign", new { fileName = task.CFileName })"
+                                       target="_blank"
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-paperclip"></i> Open
+                                    </a>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">No File</span>
+                                }
+                            </td>
+                            @if (isSelfAssigned)
+                            {
+                                <td class="delete-icon-cell" style="display: none;">
+                                    <button class="btn btn-sm btn-danger delete-task-btn">
+                                        <i class="bi bi-trash-fill"></i>
+                                    </button>
+                                </td>
+                            }
+                            else
+                            {
+                                <td></td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ---------------- Daily Task Tab ---------------- -->
+    <div class="tab-pane fade" id="daily" role="tabpanel">
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <button id="prevMonth" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-chevron-left"></i> Prev
+            </button>
+            <h4 id="monthYearTitle" class="fw-bold text-primary mb-0"></h4>
+            <button id="nextMonth" class="btn btn-outline-secondary btn-sm">
+                Next <i class="bi bi-chevron-right"></i>
+            </button>
+        </div>
+
+        <div id="calendarContainer" class="calendar border rounded shadow-sm bg-white"></div>
+
+        <!-- Popup for Tasks -->
+        <div id="taskPopup" class="task-popup"></div>
+    </div>
+
+
 </div>
 
-
-<!-- Task Details Modal -->
+<!-- ---------------- Task Details Modal ---------------- -->
 <div class="modal fade" id="taskModal" tabindex="-1" aria-labelledby="taskModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content shadow-lg border-0 rounded-3">
             <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title fw-bold" id="taskModalLabel">📌 Task Details</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <dl class="row">
@@ -127,7 +229,8 @@
 
                     <dt class="col-sm-3 text-end">Assigned To:</dt>
                     <dd class="col-sm-9" id="modalAssignTo"></dd>
-                    <dt class="col-sm-3 text-end">Assigned By(from):</dt>
+
+                    <dt class="col-sm-3 text-end">Assigned By:</dt>
                     <dd class="col-sm-9" id="modalAssignBy"></dd>
 
                     <dt class="col-sm-3 text-end">Due Date:</dt>
@@ -146,44 +249,37 @@
 @section Scripts {
     <script>
         $(document).ready(function () {
-            // Row hover effect
+
+            // Hover animation
             $(".task-row").hover(
                 function () { $(this).addClass("shadow-lg bg-light"); },
                 function () { $(this).removeClass("shadow-lg bg-light"); }
             );
 
-            // Checkbox strike-through effect
+            // Checkbox strike-through
             $(".task-checkbox").on("change", function () {
                 let row = $(this).closest("tr");
                 let taskName = row.find(".task-name");
                 if ($(this).is(":checked")) {
-                    taskName.css("text-decoration", "line-through")
-                            .css("color", "gray");
+                    taskName.css("text-decoration", "line-through").css("color", "gray");
                 } else {
-                    taskName.css("text-decoration", "none")
-                            .css("color", "black");
+                    taskName.css("text-decoration", "none").css("color", "black");
                 }
             });
 
-            // Show task details in modal
-        $('#taskModal').on('show.bs.modal', function (event) {
-            var button = $(event.relatedTarget); // Task name cell
+            // Modal details
+            $('#taskModal').on('show.bs.modal', function (event) {
+                var button = $(event.relatedTarget);
+                $('#modalTaskName').text(button.data('taskname'));
+                $('#modalTaskDate').text(button.data('taskdate'));
+                $('#modalAssignTo').text(button.data('assignto'));
+                $('#modalAssignBy').text(button.data('assignby'));
+                var dueSpan = $('#modalDueDate');
+                dueSpan.text(button.data('duedatetext'));
+                dueSpan.removeClass().addClass('badge rounded-pill px-3 py-2 ' + button.data('duedatecolor'));
+            });
 
-            $('#modalTaskName').text(button.data('taskname'));
-            $('#modalTaskDate').text(button.data('taskdate'));
-            $('#modalAssignTo').text(button.data('assignto'));
-            $('#modalAssignBy').text(button.data('assignby'));
-
-            // Update modal due date with badge color
-            var dueSpan = $('#modalDueDate');
-            dueSpan.text(button.data('duedatetext'));
-            dueSpan.removeClass(); // remove previous classes
-            dueSpan.addClass('badge rounded-pill px-3 py-2 ' + button.data('duedatecolor'));
-        });
-
-        });
-                $(document).ready(function () {
-            // Slide left and show delete icon for self-assigned tasks
+            // Self-assigned hover for delete
             $(".self-assigned").hover(
                 function () {
                     $(this).addClass("slide-left");
@@ -195,15 +291,14 @@
                 }
             );
 
-            // Delete task using AJAX
+            // Delete task
             $(".delete-task-btn").click(function (e) {
                 e.preventDefault();
                 let row = $(this).closest("tr");
                 let taskId = row.data("task-id");
-
                 if (confirm("Are you sure you want to delete this task?")) {
                     $.ajax({
-                        url: '/TaskAssign/DeleteTask',  // Adjust controller route if needed
+                        url: '/TaskAssign/DeleteTask',
                         type: 'POST',
                         data: { id: taskId },
                         success: function (res) {
@@ -219,7 +314,115 @@
                     });
                 }
             });
+
+        // ---------------- CALENDAR LOGIC ----------------
+        let currentDate = new Date();
+
+        function renderCalendar(dateObj) {
+            const calendarContainer = $("#calendarContainer");
+            calendarContainer.empty();
+
+            const year = dateObj.getFullYear();
+            const month = dateObj.getMonth();
+
+            // Set header text
+            const monthNames = [
+                "January", "February", "March", "April", "May", "June",
+                "July", "August", "September", "October", "November", "December"
+            ];
+            $("#monthYearTitle").text(`${monthNames[month]} ${year}`);
+
+            // Get first and last day of the month
+            const firstDayOfMonth = new Date(year, month, 1);
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const startDay = firstDayOfMonth.getDay(); // 0=Sunday, 1=Monday
+
+            // Fill empty cells before first day
+            for (let i = 0; i < startDay; i++) {
+                calendarContainer.append(`<div class='calendar-day invisible'></div>`);
+            }
+
+            // Generate day cells
+            for (let i = 1; i <= daysInMonth; i++) {
+                const thisDate = new Date(year, month, i);
+                const yyyy = thisDate.getFullYear();
+                const mm = String(thisDate.getMonth() + 1).padStart(2, '0');
+                const dd = String(thisDate.getDate()).padStart(2, '0');
+                const formatted = `${yyyy}-${mm}-${dd}`;
+
+                const isToday = thisDate.toDateString() === new Date().toDateString();
+
+                calendarContainer.append(`
+                    <div class="calendar-day ${isToday ? "today" : ""}" data-date="${formatted}">
+                        <strong>${i}</strong>
+                    </div>
+                `);
+            }
+
+        }
+
+        $(document).on("click", ".calendar-day:not(.invisible)", function (e) {
+            const selectedDate = $(this).data("date");
+            console.log("Selected date:", selectedDate);
+
+            const popup = $("#taskPopup");
+
+            $.ajax({
+                url: '/TaskAssign/GetDailyTasksForCalander',
+                type: 'GET',
+                data: { date: selectedDate },
+                success: function (res) {
+                    console.log("AJAX response:", res);
+
+                    if (!res.success) {
+                        popup.html("<span class='text-danger'>Error fetching tasks.</span>").fadeIn(200);
+                        return;
+                    }
+
+                    let html = `<strong>Tasks on ${selectedDate}:</strong><br>`;
+                    if (res.data.length > 0) {
+                        html += "<ul>";
+                        res.data.forEach(t => {
+                            console.log("Task item:", t);
+                            html += `<li>${t.cDailyTask}</li>`;
+                        });
+                        html += "</ul>";
+                    } else {
+                        html += "<span class='text-muted'>No tasks for this date.</span>";
+                    }
+
+                    popup.html(html)
+                         .css({ top: e.pageY + 5, left: e.pageX + 5 })
+                         .fadeIn(200);
+                },
+                error: function () {
+                    popup.html("<span class='text-danger'>Error fetching tasks.</span>").fadeIn(200);
+                }
+            });
         });
 
+
+        // Hide popup when clicking elsewhere
+        $(document).click(function (e) {
+            if (!$(e.target).closest('.calendar-day, #taskPopup').length) {
+                $("#taskPopup").fadeOut(200);
+            }
+        });
+
+        // Month navigation buttons
+        $("#prevMonth").click(function () {
+            currentDate.setMonth(currentDate.getMonth() - 1);
+            renderCalendar(currentDate);
+        });
+
+        $("#nextMonth").click(function () {
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            renderCalendar(currentDate);
+        });
+
+        // Initial render
+        renderCalendar(currentDate);
+
+        });
     </script>
 }
