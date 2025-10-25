@@ -91,6 +91,9 @@ namespace TaskPanel.Controllers
         public async Task<IActionResult> ViewTask()
         {
             var today = DateTime.Now.Date;
+            var userId = User.Claims.FirstOrDefault(c => c.Type == "UserId")?.Value;
+            int currentUserId = Convert.ToInt32(userId);
+
             var taskList = await _context.GenTaskAssigns
                 .Select(t => new TaskWithUserVM
                 {
@@ -104,7 +107,7 @@ namespace TaskPanel.Controllers
                                     .Select(u => u.CUserName)
                                     .FirstOrDefault(),
                     ToUserName = _context.GenUsers
-                                    .Where(u => u.NUserId == t.NToUser)
+                                    .Where(u => u.NUserId == currentUserId)
                                     .Select(u => u.CUserName)
                                     .FirstOrDefault(),
                     //logic for due status

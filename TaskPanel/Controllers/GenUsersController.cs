@@ -63,7 +63,7 @@ namespace TaskPanel.Controllers
             {
                 _context.Add(genUser);
                 await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction(nameof(Login));
             }
             return View(genUser);
         }
@@ -157,9 +157,29 @@ namespace TaskPanel.Controllers
             return _context.GenUsers.Any(e => e.NUserId == id);
         }
 
+        [HttpGet]
         public IActionResult Login()
         {
-            return View();
+            // If user is already authenticated
+            if (User.Identity.IsAuthenticated)
+            {
+                // Fetch username from claims
+                var username = User.Identity.Name ?? "";
+
+                // Create a model prefilled with username
+                var model = new LoginModel
+                {
+                    CUserName = username
+                };
+
+                // Show the "welcome back" message
+                ViewBag.WelcomeBack = $"Welcome back, {username} 👋 Please enter your password to continue.";
+
+                return View(model);
+            }
+
+            // Otherwise, show normal login
+            return View(new LoginModel());
         }
 
         [HttpPost]
