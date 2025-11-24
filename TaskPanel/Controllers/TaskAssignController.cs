@@ -95,6 +95,7 @@ namespace TaskPanel.Controllers
             int currentUserId = Convert.ToInt32(userId);
 
             var taskList = await _context.GenTaskAssigns
+                .Where(t => (!t.NTaskType.HasValue || t.NTaskType == 0) && (t.NComplete == null || t.NComplete == false) && t.DCompleteDate == null)
                 .Select(t => new TaskWithUserVM
                 {
                     NTaskNo = t.NTaskNo,
@@ -153,6 +154,30 @@ namespace TaskPanel.Controllers
 
             return Json(new { success = true });
         }
+
+        [HttpPost]
+        public IActionResult CompleteTasks(List<int> selectedTaskIds)
+        {
+            if (selectedTaskIds == null || !selectedTaskIds.Any())
+                return RedirectToAction("ViewTask");
+
+            var tasks = _context.GenTaskAssigns
+                .Where(t => selectedTaskIds.Contains(t.NTaskNo))
+                .ToList();
+
+            foreach (var task in tasks)
+            {
+                task.NComplete = true;              // bool column
+                task.DCompleteDate = DateTime.Now;  // completion timestamp
+            }
+
+            _context.SaveChanges();
+
+            return RedirectToAction("ViewTask");   // reload page
+        }
+
+
+
 
         // --------------------------------------------
         // 📌 DAILY TASK (Multiple Add + Single Parent Entry)
